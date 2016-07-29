@@ -30,18 +30,23 @@ print("Preparing for IP Information---------------------------------")
 unique_IP_count = content.countByKey()
 
 
-# Get the location and other detailed information from http://ipinfo.io API.
+threshold_to_display = 5
+# Only show the request the Geo info for IP visited for more than n times
+
+# Get the location and other detailed information from API.
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
-    temp = requests.get('http://ip-api.com/json/' + ip)
-    sleep(0.5) # this is to prevent being banned since ip-api has restriction to request no more than 150 times per minuete
-    ip_info = json.loads(temp.text)
-    unique_IP_count[ip] = {'count':unique_IP_count[ip], 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+    if unique_IP_count[ip] > threshold_to_display:
+        print "Getting IP Geo info for " + ip
+        temp = requests.get('http://ip-api.com/json/' + ip)
+        sleep(0.5) # this is to prevent being banned since ip-api has restriction to request no more than 150 times per minuete
+        ip_info = json.loads(temp.text)
+        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+    else:
+        unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
 
 # Only show the IP visisted for more than n times
-threshold_to_display = 10
-
 to_display = {}
 for ip in ip_to_check:
     if unique_IP_count[ip]['count'] > threshold_to_display:
