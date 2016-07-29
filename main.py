@@ -3,6 +3,7 @@ import sys   # read argument from command line
 import requests   # get info from API
 import json  # decode json data
 from prettytable import PrettyTable
+from time import sleep
 
 
 # the first argument will be file name by default, so even if we only enter 3 arguments, there will be four.
@@ -33,6 +34,7 @@ unique_IP_count = content.countByKey()
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
     temp = requests.get('http://ip-api.com/json/' + ip)
+    sleep(0.5) # this is to prevent being banned since ip-api has restriction to request no more than 150 times per minuete
     ip_info = json.loads(temp.text)
     unique_IP_count[ip] = {'count':unique_IP_count[ip], 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
 
