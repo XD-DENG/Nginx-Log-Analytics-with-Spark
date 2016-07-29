@@ -70,7 +70,7 @@ field_names = ["IP", "Count", "Country", "Region", "City", "Org"]
 t = PrettyTable(field_names)
 
 for k in range(len(sorted_request_count_of_IP_to_display)):
-    max_count = sorted_request_count_of_IP_to_display.pop(sorted_request_count_of_IP_to_display)
+    max_count = sorted_request_count_of_IP_to_display.pop()
     IP_to_print_at_this_round = dict_of_IP_and_COUNT.keys()[dict_of_IP_and_COUNT.values().index(max_count)]
     del dict_of_IP_and_COUNT[IP_to_print_at_this_round]
     temp = to_display[IP_to_print_at_this_round]
