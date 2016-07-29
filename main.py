@@ -32,7 +32,7 @@ unique_IP_count = content.countByKey()
 # Get the location and other detailed information from http://ipinfo.io API.
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
-    temp = requests.get('http://ipinfo.io/' + ip)
+    temp = requests.get('http://ip-api.com/json/' + ip)
     ip_info = json.loads(temp.text)
     unique_IP_count[ip] = {'count':unique_IP_count[ip], 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
 
