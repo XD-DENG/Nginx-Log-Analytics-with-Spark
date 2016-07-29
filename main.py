@@ -42,17 +42,38 @@ threshold_to_display = 10
 
 to_display = {}
 for ip in ip_to_check:
-	if unique_IP_count[ip]['count'] > threshold_to_display:
-		to_display[ip] = unique_IP_count[ip]
+    if unique_IP_count[ip]['count'] > threshold_to_display:
+        to_display[ip] = unique_IP_count[ip]
 
 
-# Print Out important information.
+# Print Out important information. ------------------
+
+# preparation - 1
+# Extract the request count information
+# This is for printing important information by the order of times of requests
+request_count_of_IP_to_display = []
+for k in to_display.keys():
+    request_count_of_IP_to_display.insert(0, to_display[k]['count'])
+    
+
+# preparation - 2
+# a dict of IP and request counts
+# it also helps print the important information by the order ot the request count
+dict_of_IP_and_COUNT = {}
+for k in to_display.keys():
+    dict_of_IP_and_COUNT[k] = to_display[k]['count']
+
+
+# start to print out the table of important information
 field_names = ["IP", "Count", "Country", "Region", "City", "Org"]
-
 t = PrettyTable(field_names)
 
-for k in to_display.keys():
-    t.add_row([k, to_display[k]['count'], to_display[k]['country'], to_display[k]['region'], to_display[k]['city'], to_display[k]["org"]])
+for k in range(len(request_count_of_IP_to_display)):
+    max_count = request_count_of_IP_to_display.pop(max(request_count_of_IP_to_display))
+    IP_to_print_at_this_round = dict_of_IP_and_COUNT.keys()[dict_of_IP_and_COUNT.values().index(max_count)]
+    del dict_of_IP_and_COUNT[IP_to_print_at_this_round]
+    temp = to_display[IP_to_print_at_this_round]
+    t.add_row([IP_to_print_at_this_round, temp['count'], temp['country'], temp['region'], temp['city'], temp["org"]])
 
 print t
 print "(Only IP addresses visited more than " + str(threshold_to_display) + " times are displayed.)"
