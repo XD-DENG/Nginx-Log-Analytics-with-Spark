@@ -4,7 +4,7 @@ import requests   # get info from API
 import json  # decode json data
 from prettytable import PrettyTable
 from time import sleep
-
+import re # to detect specific string from the log. This is for detecting failed traffic
 
 # the first argument will be file name by default, so even if we only enter 3 arguments, there will be four.
 # this is also why we start index from 1 instead of 0.
@@ -20,8 +20,8 @@ raw_content = sc.textFile(raw_data_directory)
 
 
 print("Cleaning the data---------------------------------")
-content = raw_content.map(lambda x: (x.split(' - ')[0], x))  # Get all the IP address records in the log files
-
+re_detect_failed_traffic = re.compile('.+ 40[0-9] .+') # help detect failed traffic by matching '403' or '404' in the log
+content = raw_content.map(lambda x: (x.split(' - ')[0], bool(re_detect_failed_traffic.match(x)), x))  # Get all the IP address records in the log files, and check if the traffic failed
 
 print(str(content.count()) + " rows of log records are loaded.")
 
@@ -30,18 +30,21 @@ print("Preparing for IP Information---------------------------------")
 unique_IP_count = content.countByKey()
 
 
-threshold_to_display = 5
+threshold_to_display = 3
 # Only show the request the Geo info for IP visited for more than n times
 
 # Get the location and other detailed information from API.
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
     if unique_IP_count[ip] > threshold_to_display:
-        print "Getting IP Geo info for " + ip
+        print "Getting IP Geo info & Failure Ratio for " + ip
         temp = requests.get('http://ip-api.com/json/' + ip)
         sleep(0.5) # this is to prevent being banned since ip-api has restriction to request no more than 150 times per minuete
         ip_info = json.loads(temp.text)
-        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+        failure_times = sum(content.filter(lambda x:x[0] == ip).map(lambda x:x[1]).collect())
+        failure_ratio = float(failure_times)/unique_IP_count[ip]
+        failure_ratio = str(round(failure_ratio, 4) * 100) + "%"
+        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'failure_ratio':failure_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
@@ -73,7 +76,7 @@ for k in to_display.keys():
 
 
 # start to print out the table of important information
-field_names = ["IP", "Count", "Country", "Region", "City", "Org"]
+field_names = ["IP", "Count", "Failure.Ratio", "Country", "Region", "City", "Org"]
 t = PrettyTable(field_names)
 
 for k in range(len(sorted_request_count_of_IP_to_display)):
@@ -81,7 +84,7 @@ for k in range(len(sorted_request_count_of_IP_to_display)):
     IP_to_print_at_this_round = dict_of_IP_and_COUNT.keys()[dict_of_IP_and_COUNT.values().index(max_count)]
     del dict_of_IP_and_COUNT[IP_to_print_at_this_round]
     temp = to_display[IP_to_print_at_this_round]
-    t.add_row([IP_to_print_at_this_round, temp['count'], temp['country'], temp['region'], temp['city'], temp["org"]])
+    t.add_row([IP_to_print_at_this_round, temp['count'], temp['failure_ratio'], temp['country'], temp['region'], temp['city'], temp["org"]])
 
 print t
 print "(Only IP addresses visited more than " + str(threshold_to_display) + " times are displayed.)"
