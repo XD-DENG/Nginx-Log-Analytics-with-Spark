@@ -20,8 +20,10 @@ raw_content = sc.textFile(raw_data_directory)
 
 
 print("Cleaning the data---------------------------------")
-re_detect_failed_traffic = re.compile('.+ 40[0-9] .+') # help detect failed traffic by matching '403' or '404' in the log
-content = raw_content.map(lambda x: (x.split(' - ')[0], bool(re_detect_failed_traffic.match(x)), x))  # Get all the IP address records in the log files, and check if the traffic failed
+# help detect failed traffic by matching '403' or '404' in the log
+re_detect_failed_traffic = re.compile('.+ 404 .+')
+re_detect_rejected_traffic = re.compile('.+ 403 .+')
+content = raw_content.map(lambda x: (x.split(' - ')[0], bool(re_detect_failed_traffic.match(x)), bool(re_detect_rejected_traffic.match(x))))  # Get all the IP address records in the log files, and check if the traffic failed
 
 print(str(content.count()) + " rows of log records are loaded.")
 
@@ -41,10 +43,16 @@ for ip in ip_to_check:
         temp = requests.get('http://ip-api.com/json/' + ip)
         sleep(0.5) # this is to prevent being banned since ip-api has restriction to request no more than 150 times per minuete
         ip_info = json.loads(temp.text)
+        
         failure_times = sum(content.filter(lambda x:x[0] == ip).map(lambda x:x[1]).collect())
         failure_ratio = float(failure_times)/unique_IP_count[ip]
         failure_ratio = str(round(failure_ratio, 4) * 100) + "%"
-        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'failure_ratio':failure_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+        
+        rejected_times = sum(content.filter(lambda x:x[0] == ip).map(lambda x:x[2]).collect())
+        rejected_ratio = float(rejected_times)/unique_IP_count[ip]
+        rejected_ratio = str(round(rejected_ratio, 4) * 100) + "%"
+        
+        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
@@ -76,7 +84,7 @@ for k in to_display.keys():
 
 
 # start to print out the table of important information
-field_names = ["IP", "Count", "Failure.Ratio", "Country", "Region", "City", "Org"]
+field_names = ["IP", "Count", "404 - Ratio", "403 - Ratio", "Country", "Region", "City", "Org"]
 t = PrettyTable(field_names)
 
 for k in range(len(sorted_request_count_of_IP_to_display)):
@@ -84,7 +92,7 @@ for k in range(len(sorted_request_count_of_IP_to_display)):
     IP_to_print_at_this_round = dict_of_IP_and_COUNT.keys()[dict_of_IP_and_COUNT.values().index(max_count)]
     del dict_of_IP_and_COUNT[IP_to_print_at_this_round]
     temp = to_display[IP_to_print_at_this_round]
-    t.add_row([IP_to_print_at_this_round, temp['count'], temp['failure_ratio'], temp['country'], temp['region'], temp['city'], temp["org"]])
+    t.add_row([IP_to_print_at_this_round, temp['count'], temp['ratio.404'], temp['ratio.403'], temp['country'], temp['region'], temp['city'], temp["org"]])
 
 print t
 print "(Only IP addresses visited more than " + str(threshold_to_display) + " times are displayed.)"
