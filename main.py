@@ -38,6 +38,9 @@ threshold_to_display = 3
 # Get the location and other detailed information from API.
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
+    
+    bool_private_ip = content.filter(lambda x:x[0] == ip).map(lambda x:x[3]).take(1)
+    
     if unique_IP_count[ip] > threshold_to_display:
         print "Getting IP Geo info & Failure Ratio for " + ip
         temp = requests.get('http://ip-api.com/json/' + ip)
@@ -52,9 +55,10 @@ for ip in ip_to_check:
         rejected_ratio = float(rejected_times)/unique_IP_count[ip]
         rejected_ratio = str(round(rejected_ratio, 4) * 100) + "%"
         
-        bool_private_ip = content.filter(lambda x:x[0] == ip).map(lambda x:x[3]).take(1)
-        
-        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+        if bool_private_ip == False:
+            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+        else:
+            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':'NA', 'region':'NA', 'city':'NA', 'org':'NA'}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
@@ -86,7 +90,7 @@ for k in to_display.keys():
 
 
 # start to print out the table of important information
-field_names = ["IP", "Count", "Private IP" "404 - Ratio", "403 - Ratio", "Country", "Region", "City", "Org"]
+field_names = ["IP", "Count", "Private IP", "404 - Ratio", "403 - Ratio", "Country", "Region", "City", "Org"]
 t = PrettyTable(field_names)
 
 for k in range(len(sorted_request_count_of_IP_to_display)):
