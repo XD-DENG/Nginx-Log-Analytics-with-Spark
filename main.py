@@ -58,7 +58,7 @@ for ip in ip_to_check:
         if bool_private_ip == False:
             unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':'-', 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
         else:
-            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':'Y', 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':'NA', 'region':'NA', 'city':'NA', 'org':'NA'}
+            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':'Y', 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':'-', 'region':'-', 'city':'-', 'org':'-'}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
