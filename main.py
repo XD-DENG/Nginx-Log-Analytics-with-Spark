@@ -39,7 +39,7 @@ threshold_to_display = 3
 ip_to_check = unique_IP_count.keys()
 for ip in ip_to_check:
     
-    bool_private_ip = content.filter(lambda x:x[0] == ip).map(lambda x:x[3]).take(1)
+    bool_private_ip = content.filter(lambda x:x[0] == ip).map(lambda x:x[3]).take(1)[0]
     
     if unique_IP_count[ip] > threshold_to_display:
         print "Getting IP Geo info & Failure Ratio for " + ip
