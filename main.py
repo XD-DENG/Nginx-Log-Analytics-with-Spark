@@ -55,16 +55,10 @@ for ip in ip_to_check:
         rejected_ratio = float(rejected_times)/unique_IP_count[ip]
         rejected_ratio = str(round(rejected_ratio, 4) * 100) + "%"
         
-        # adjust the format of 'bool_private_ip'
-        if bool_private_ip == True:
-            bool_private_ip = 'Y'
-        else:
-            bool_private_ip = '-'
-        
         if bool_private_ip == False:
-            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':'-', 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
         else:
-            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':'NA', 'region':'NA', 'city':'NA', 'org':'NA'}
+            unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':'Y', 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':'NA', 'region':'NA', 'city':'NA', 'org':'NA'}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
