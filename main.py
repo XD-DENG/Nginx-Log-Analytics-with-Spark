@@ -23,7 +23,7 @@ print("Cleaning the data---------------------------------")
 # help detect failed traffic by matching '403' or '404' in the log
 re_detect_failed_traffic = re.compile('.+ 404 .+')
 re_detect_rejected_traffic = re.compile('.+ 403 .+')
-content = raw_content.map(lambda x: (x.split(' - ')[0], bool(re_detect_failed_traffic.match(x)), bool(re_detect_rejected_traffic.match(x))))  # Get all the IP address records in the log files, and check if the traffic failed
+content = raw_content.map(lambda x: (x.split(' - ')[0], bool(re_detect_failed_traffic.match(x)), bool(re_detect_rejected_traffic.match(x)), x.split(' - ')[0].split('.')[0] in ['10', '172', '192']))  # Get all the IP address records in the log files, and check if the traffic failed
 
 print(str(content.count()) + " rows of log records are loaded.")
 
@@ -52,7 +52,9 @@ for ip in ip_to_check:
         rejected_ratio = float(rejected_times)/unique_IP_count[ip]
         rejected_ratio = str(round(rejected_ratio, 4) * 100) + "%"
         
-        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
+        bool_private_ip = content.filter(lambda x:x[0] == ip).map(lambda x:x[3]).take(1)
+        
+        unique_IP_count[ip] = {'count':unique_IP_count[ip], 'private_ip':bool_private_ip, 'ratio.404':failure_ratio, 'ratio.403':rejected_ratio, 'country':ip_info['country'], 'region':ip_info['region'], 'city':ip_info['city'], 'org':ip_info['org']}
     else:
         unique_IP_count[ip] = {'count':unique_IP_count[ip]}
 
@@ -84,7 +86,7 @@ for k in to_display.keys():
 
 
 # start to print out the table of important information
-field_names = ["IP", "Count", "404 - Ratio", "403 - Ratio", "Country", "Region", "City", "Org"]
+field_names = ["IP", "Count", "Private IP" "404 - Ratio", "403 - Ratio", "Country", "Region", "City", "Org"]
 t = PrettyTable(field_names)
 
 for k in range(len(sorted_request_count_of_IP_to_display)):
@@ -92,7 +94,7 @@ for k in range(len(sorted_request_count_of_IP_to_display)):
     IP_to_print_at_this_round = dict_of_IP_and_COUNT.keys()[dict_of_IP_and_COUNT.values().index(max_count)]
     del dict_of_IP_and_COUNT[IP_to_print_at_this_round]
     temp = to_display[IP_to_print_at_this_round]
-    t.add_row([IP_to_print_at_this_round, temp['count'], temp['ratio.404'], temp['ratio.403'], temp['country'], temp['region'], temp['city'], temp["org"]])
+    t.add_row([IP_to_print_at_this_round, temp['count'], temp['private_ip'], temp['ratio.404'], temp['ratio.403'], temp['country'], temp['region'], temp['city'], temp["org"]])
 
 print t
 print "(Only IP addresses visited more than " + str(threshold_to_display) + " times are displayed.)"
